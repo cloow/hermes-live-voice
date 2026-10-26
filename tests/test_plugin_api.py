@@ -370,6 +370,22 @@ def test_host_bot_name_reads_agent_name_and_falls_back_to_hermes(tmp_path):
     assert ns["_host_bot_name"]() == "Hermes"
 
 
+def test_host_bot_name_uses_hermes_yaml_without_pyyaml(tmp_path, monkeypatch):
+    """Hermes parses YAML with ruamel (`hermes_yaml`); PyYAML is not a Hermes dependency.
+
+    A host without PyYAML must still read `agent.name` instead of silently
+    falling back to "Hermes".
+    """
+    pytest.importorskip("hermes_yaml", reason="needs the Hermes runtime (hermes_yaml)")
+    monkeypatch.setitem(sys.modules, "yaml", None)  # `import yaml` -> ImportError
+    ns = load_unit(PLUGIN_API, "_host_bot_name")
+    ns.update(talk_config=SimpleNamespace(get_hermes_home=lambda: tmp_path))
+    (tmp_path / "config.yaml").write_text("agent:\n  name: Atlas\n", encoding="utf-8")
+    assert ns["_host_bot_name"]() == "Atlas"
+    (tmp_path / "config.yaml").write_text("agent: [broken", encoding="utf-8")
+    assert ns["_host_bot_name"]() == "Hermes"
+
+
 def test_no_hardcoded_owner_name_in_shipped_code():
     for rel in ("dashboard/plugin_api.py", "desktop/plugin.js"):
         assert "Luna" not in (REPO / rel).read_text(encoding="utf-8"), rel

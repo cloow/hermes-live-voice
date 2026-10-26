@@ -19,7 +19,11 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-import yaml
+
+try:  # Hermes ships ruamel via hermes_yaml, not PyYAML; CI installs PyYAML instead
+    import hermes_yaml as yaml
+except ImportError:
+    import yaml
 
 from test_plugin_api import PLUGIN_API, REPO, VENDOR, load_unit
 

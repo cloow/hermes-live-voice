@@ -113,7 +113,12 @@ def _profile_home(profile: str) -> Path | None:
 def _host_bot_name() -> str:
     """Nombre del bot host: `agent.name` del config.yaml del host; si no hay, "Hermes"."""
     try:
-        import yaml  # PyYAML viene con Hermes
+        # Hermes parsea YAML con ruamel vía `hermes_yaml`; PyYAML NO es dependencia
+        # de Hermes. PyYAML queda solo como fallback (hosts antiguos / CI sin Hermes).
+        try:
+            import hermes_yaml as yaml
+        except ImportError:
+            import yaml
 
         cfg = yaml.safe_load((talk_config.get_hermes_home() / "config.yaml").read_text(encoding="utf-8")) or {}
         name = str(((cfg.get("agent") or {}).get("name") or "")).strip()
